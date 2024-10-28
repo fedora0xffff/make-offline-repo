@@ -11,7 +11,7 @@ skip_errors="skip-errors"
 usage() {
     echo """
 Usage: <make_local_repo.sh> <params>, 
-
+This script creates a local .deb packages repo from the list of packages listed in the provided \`config\` file.
 params:
 
 config                      specify path to the file containig required packages list
@@ -32,12 +32,13 @@ prepare_repo() {
     for filename in ${out}/*; do
         for arch in "${archs[@]}"; do
             if [[ "$filename" =~ "$arch" && ! -d "$filename" ]]; then
-                mv "$filename" "$out/$arch"
+                mv "$filename" "$out/$arch" > /dev/null 2>&1
             fi
         done
     done
 
     for arch in "${archs[@]}"; do
+        print_message "Indexing packages in "$out/$arch"..."
         dpkg-scanpackages "$out/$arch" | gzip -9c > "$out/$arch/Packages.gz"
     done
 }
@@ -57,10 +58,10 @@ read_packages() {
 
 download_package_and_deps() {
     sudo apt clean
-    if ! sudo apt --download-only install "$1" -y; then 
+    if ! sudo apt --download-only install "$1" -y > /dev/null 2>&1; then 
         print_message "Failed to download package $1"
         [[ ! $skip_err = "1" ]] && exit 1
-        failed_to_load+="$1"
+        failed_to_load+=("$1")
     else 
         cp /var/cache/apt/archives/*.deb "$out" > /dev/null 2>&1
     fi
@@ -78,18 +79,22 @@ main() {
     failed_to_load=()
     packages=()
 
-    if [[ ${#arg_map[@]} -eq 0 || arg_map["help"] = "1" ]]; then
+    if [[ "${arg_map["help"]}" = "1" ]]; then
         usage && exit 0
     fi
 
-    if ! which dpkg-scanpackages > /dev/null 2>&1; then
-        pretty_error "dpkg-scanpackages is missing! Cannot precoeed"
+     if ! which dpkg-scanpackages > /dev/null 2>&1; then
+        print_message "dpkg-scanpackages is missing! Trying to install dpkg-dev..."
+        sudo apt update
+        if ! sudo apt install dpkg-dev -y; then 
+             pretty_error "Failed to install dpkg-dev, cannot proceed"
+        fi
     fi
 
     [[ ! -f "$config_file" ]] && pretty_error "Invalid package config path: $config_file, exitting"
     [[ ! -d "$out" ]] && mkdir -p $out > /dev/null 2>&1
 
-    read_packages
+    read_file_to_array packages "$config_file" "#"
     if [[ "${packages[@]}" =~ "i386" ]]; then
         sudo dpkg --add-architecture i386
         archs+=("i386")
