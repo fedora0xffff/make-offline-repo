@@ -90,7 +90,7 @@ main() {
     [[ ! -d "$out" ]] && mkdir -p $out > /dev/null 2>&1
 
     read_packages
-    if [[ "${packages[@]}" =~ "i386" ]]; then ~
+    if [[ "${packages[@]}" =~ "i386" ]]; then
         sudo dpkg --add-architecture i386
         archs+=("i386")
     fi
