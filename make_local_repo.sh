@@ -31,7 +31,7 @@ prepare_repo() {
 
     for filename in ${out}/*; do
         for arch in "${archs[@]}"; do
-            if [[ "$filename" =~ "$arch" ]]; then
+            if [[ "$filename" =~ "$arch" && ! -d "$filename" ]]; then
                 mv "$filename" "$out/$arch"
             fi
         done
@@ -62,7 +62,7 @@ download_package_and_deps() {
         [[ ! $skip_err = "1" ]] && exit 1
         failed_to_load+="$1"
     else 
-        cp /var/cache/apt/archives/*.deb "$out"
+        cp /var/cache/apt/archives/*.deb "$out" > /dev/null 2>&1
     fi
 }
 
