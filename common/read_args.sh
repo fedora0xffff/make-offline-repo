@@ -28,7 +28,6 @@ read_args() {
         fi
     done
 
-    #show map
 }
 
 # 1 - a reference to a caller's array

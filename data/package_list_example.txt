@@ -1,0 +1,7 @@
+# comment lines start with `#`
+# always put a newline char at the end of this file
+
+path:<path/to/package_dir>          # `path:` states a path to a dir with locally stored packages that need to be added  
+<package_name>:local                # `:local` marks a package that is to be searched locally in `path`
+<package_name>                      # no label means the package is to be downloaded 
+
